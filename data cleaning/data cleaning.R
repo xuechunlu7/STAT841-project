@@ -22,26 +22,46 @@ train2<-complete(tempdata,1)
 # write the data with imputations to file train2.csv
 write.csv(train2,
           file = "/Users/xuechunlu/OneDrive/20W/STAT841/STAT841-project/data/train2.csv", row.names = FALSE)
+
+
 # test reading the data
 train2<-read.csv("/Users/xuechunlu/OneDrive/20W/STAT841/STAT841-project/data/train2.csv")
 colnames(train2)
 X<-train2[,-c(1,119)]
-X[,2]<-as.factor(X[,2])
+colnames(X)
+index.quali<-c(1,2,3,5,6,7)
+for (i in index.quali){
+  X[,i]<-as.factor(X[,i])
+}
+
 y<-as.data.frame(as.factor(train2[,c(119)]))
 train2<-cbind(X,y)
 colnames(train2)[118]<-c("Risk")
 colnames(train2)
+
+
+
+
+
 # PCA 
 library(PCAmixdata)
 
-X.quanti<-X[,-c(2)]
-X.quali<-as.data.frame(X[,2])
-
+X.quanti<-train2[,-c(1,2,3,5,6,7,118)]
+X.quali<-as.data.frame(train2[,c(1,2,3,5,6,7)])
+dim(train2)
 # 20 variables were selected out of 117 features (ID excluded).
-PCA.model<-PCAmix(X.quanti = X.quanti, X.quali = X.quali, ndim = 20)
+PCA.model<-PCAmix(X.quanti = X.quanti, X.quali = X.quali, ndim = 20, rename.level=TRUE)
 X_PCA<-predict(PCA.model, 
                            X.quanti = X.quanti, 
                            X.quali = X.quali)
+
+write.csv(X_PCA,
+          file="/Users/xuechunlu/OneDrive/20W/STAT841/STAT841-project/data/X_PCA.csv")
+
+
+
+
+
 
 
 
@@ -73,3 +93,5 @@ for (i in 1:33){
 }
 index2
 X_CFS<-X[,index2]
+write.csv(X_CFS,
+          file="/Users/xuechunlu/OneDrive/20W/STAT841/STAT841-project/data/X_CFS.csv")
