@@ -1,5 +1,5 @@
-X_CFS<-read.csv("/Users/xuechunlu/OneDrive/20W/STAT841/STAT841-project/data/cfs_results_weka_training_data.csv")
-X_PCA<-read.csv("/Users/xuechunlu/OneDrive/20W/STAT841/STAT841-project/data/pca_20_attr_weka_training_data.csv")
+X_CFS<-read.csv("/Users/xuechunlu/OneDrive/20W/STAT841/STAT841-project/data/cfs_training_data.csv")
+X_PCA<-read.csv("/Users/xuechunlu/OneDrive/20W/STAT841/STAT841-project/data/pca_20_attr_training_data.csv")
 data<-read.csv("data/train.csv")
 y<-as.factor(data$Response)
 # X_CFS<-cbind(X_CFS,y)
