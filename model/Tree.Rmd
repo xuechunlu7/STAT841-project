@@ -1,0 +1,214 @@
+---
+title: "stat 841 project"
+output: html_document
+---
+```{r}
+setwd("C:/Users/Lmd19/Desktop")
+cfstr = read.csv("cfs_training_data.csv",header = T)
+cfste = read.csv("cfs_test_data.csv")
+pcatr = read.csv("pca_20_attr_training_data.csv")
+pcate = read.csv("pcr_20_attr_test_data.csv")
+```
+
+```{r 10 fold cv}
+cfstr = cfstr[sample(nrow(cfstr)),]
+
+set1 = cfstr[1:5341,]
+set2 = cfstr[5342:10682,]
+set3 = cfstr[10683:16023,]
+set4 = cfstr[16024:21364,]
+set5 = cfstr[21365:26705,]
+set6 = cfstr[26706:32046,]
+set7 = cfstr[32047:37387,]
+set8 = cfstr[37388:42728,]
+set9 = cfstr[42729:48609,]
+set10 =cfstr[48610:53407,]
+cv1 = rbind(set1,set2,set3,set4,set5,set6,set7,set8,set9)
+cv2 = rbind(set10,set2,set3,set4,set5,set6,set7,set8,set9)
+cv3 = rbind(set1,set10,set3,set4,set5,set6,set7,set8,set9)
+cv4 = rbind(set1,set2,set10,set4,set5,set6,set7,set8,set9)
+cv5 = rbind(set1,set2,set3,set10,set5,set6,set7,set8,set9)
+cv6 = rbind(set1,set2,set3,set4,set10,set6,set7,set8,set9)
+cv7 = rbind(set1,set2,set3,set4,set5,set10,set7,set8,set9)
+cv8 = rbind(set1,set2,set3,set4,set5,set6,set10,set8,set9)
+cv9 = rbind(set1,set2,set3,set4,set5,set6,set7,set10,set9)
+cv10 =rbind(set1,set2,set3,set4,set5,set6,set7,set8,set10)
+
+set11 = pcatr[1:5341,]
+set12 = pcatr[5342:10682,]
+set13 = pcatr[10683:16023,]
+set14 = pcatr[16024:21364,]
+set15 = pcatr[21365:26705,]
+set16 = pcatr[26706:32046,]
+set17 = pcatr[32047:37387,]
+set18 = pcatr[37388:42728,]
+set19 = pcatr[42729:48609,]
+set20 = pcatr[48610:53407,]
+cv11 = rbind(set11,set12,set13,set14,set15,set16,set17,set18,set19)
+cv12 = rbind(set20,set12,set13,set14,set15,set16,set17,set18,set19)
+cv13 = rbind(set11,set20,set13,set14,set15,set16,set17,set18,set19)
+cv14 = rbind(set11,set12,set20,set14,set15,set16,set17,set18,set19)
+cv15 = rbind(set11,set12,set13,set20,set15,set16,set17,set18,set19)
+cv16 = rbind(set11,set12,set13,set14,set20,set16,set17,set18,set19)
+cv17 = rbind(set11,set12,set13,set14,set15,set20,set17,set18,set19)
+cv18 = rbind(set11,set12,set13,set14,set15,set16,set20,set18,set19)
+cv19 = rbind(set11,set12,set13,set14,set15,set16,set17,set20,set19)
+cv20 = rbind(set11,set12,set13,set14,set15,set16,set17,set18,set20)
+
+```
+
+```{r REP tree}
+library(rpart)
+
+cont1 = rpart.control(minsplit = 200, cp = 0.01,xval = 10)
+
+cfsrep = rpart(Response~.-Id, data = cfstr,control = cont1)
+cfsrep = prune.rpart(cfsrep,cp = 0.3)
+pred1 = predict(cfsrep,newdata = cfste[,-41])
+cfsmae = mean(abs(pred1-cfste$Response))
+cfsrmse = sqrt(mean((pred1-cfste$Response)^2))
+cfserr = mean(round(pred1)!=cfste$Response)
+
+pcarep1 = rpart(Response~.-Id, data = pcatr,control = cont1)
+pcarep1 = prune.rpart(pcarep1,cp = 0.3)
+pred3 = predict(pcarep1,newdata = pcate[,-22])
+pcamae1 = mean(abs(pred3-pcate$Response))
+pcarmse1 = sqrt(mean((pred3-pcate$Response)^2))
+pcaerr1 = mean(round(pred3)!=pcate$Response)
+```
+
+```{r random tree}
+library(ranger)
+pcart1 = ranger(Response~.-Id , data = cv11,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p1 = predict(pcart1,data = set20[,-ncol(pcate)])
+mae1 = mean(abs(p1$predictions-set20$Response))
+rmse1 = sqrt(mean((p1$predictions-set20$Response)^2))
+err1 = mean(p1$predictions!=set20$Response)
+
+pcart2 = ranger(Response~.-Id , data = cv12,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p2 = predict(pcart2,data = set11[,-ncol(pcate)])
+mae2 = mean(abs(p2$predictions-set11$Response))
+rmse2 = sqrt(mean((p2$predictions-set11$Response)^2))
+err2 = mean(p2$predictions!=set11$Response)
+
+pcart3 = ranger(Response~.-Id , data = cv13,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p3 = predict(pcart3,data = set12[,-ncol(pcate)])
+mae3 = mean(abs(p3$predictions-set12$Response))
+rmse3 = sqrt(mean((p3$predictions-set12$Response)^2))
+err3 = mean(p3$predictions!=set12$Response)
+
+pcart4 = ranger(Response~.-Id , data = cv14,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p4 = predict(pcart4,data = set13[,-ncol(pcate)])
+mae4 = mean(abs(p4$predictions-set13$Response))
+rmse4 = sqrt(mean((p4$predictions-set13$Response)^2))
+err4 = mean(p4$predictions!=set13$Response)
+
+pcart5 = ranger(Response~.-Id , data = cv15,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p5 = predict(pcart5,data = set14[,-ncol(pcate)])
+mae5 = mean(abs(p5$predictions-set14$Response))
+rmse5 = sqrt(mean((p5$predictions-set14$Response)^2))
+err5 = mean(p5$predictions!=set14$Response)
+
+pcart6 = ranger(Response~.-Id , data = cv16,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p6 = predict(pcart6,data = set15[,-ncol(pcate)])
+mae6 = mean(abs(p6$predictions-set15$Response))
+rmse6 = sqrt(mean((p6$predictions-set15$Response)^2))
+err6 = mean(p6$predictions!=set15$Response)
+
+pcart7 = ranger(Response~.-Id , data = cv17,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p7 = predict(pcart7,data = set16[,-ncol(pcate)])
+mae7 = mean(abs(p7$predictions-set16$Response))
+rmse7 = sqrt(mean((p7$predictions-set16$Response)^2))
+err7 = mean(p7$predictions!=set16$Response)
+
+pcart8 = ranger(Response~.-Id , data = cv18,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p8 = predict(pcart8,data = set17[,-ncol(pcate)])
+mae8 = mean(abs(p8$predictions-set17$Response))
+rmse8 = sqrt(mean((p8$predictions-set17$Response)^2))
+err8 = mean(p8$predictions!=set17$Response)
+
+pcart9 = ranger(Response~.-Id , data = cv19,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p9 = predict(pcart9,data = set18[,-ncol(pcate)])
+mae9 = mean(abs(p9$predictions-set18$Response))
+rmse9 = sqrt(mean((p9$predictions-set18$Response)^2))
+err9 = mean(p9$predictions!=set18$Response)
+
+pcart10 = ranger(Response~.-Id , data = cv20,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p10 = predict(pcart10,data = set20[,-ncol(pcate)])
+mae10 = mean(abs(p10$predictions-set19$Response))
+rmse10 = sqrt(mean((p10$predictions-set19$Response)^2))
+err10 = mean(p10$predictions!=set19$Response)
+
+pcamae2 = mean(mae1,mae2,mae3,mae4,mae5,mae6,mae7,mae8,mae9,mae10)
+pcarmse2 = mean(rmse1,rmse2,rmse3,rmse4,rmse5,rmse6,rmse7,rmse8,rmse9,rmse10)
+pcaerr2 = mean(err1,err2,err3,err4,err5,err6,err7,err8,err9,err10)
+
+
+cfsrt1 = ranger(Response~.-Id , data = cv1,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p11 = predict(cfsrt1,data = set10[,-ncol(cfste)])
+cfsmae1 = mean(abs(p11$predictions-set10$Response))
+cfsrmse1 = sqrt(mean((p11$predictions-set10$Response)^2))
+cfserr1 = mean(p11$predictions!=set10$Response)
+
+cfsrt2 = ranger(Response~.-Id , data = cv2,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p12 = predict(cfsrt1,data = set1[,-ncol(cfste)])
+cfsmae2 = mean(abs(p12$predictions-set1$Response))
+cfsrmse2 = sqrt(mean((p12$predictions-set1$Response)^2))
+cfserr2 = mean(p12$predictions!=set1$Response)
+
+cfsrt3 = ranger(Response~.-Id , data = cv3,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p13 = predict(cfsrt3,data = set2[,-ncol(cfste)])
+cfsmae3 = mean(abs(p13$predictions-set2$Response))
+cfsrmse3 = sqrt(mean((p13$predictions-set2$Response)^2))
+cfserr3 = mean(p13$predictions!=set2$Response)
+
+cfsrt4 = ranger(Response~.-Id , data = cv4,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p14 = predict(cfsrt4,data = set3[,-ncol(cfste)])
+cfsmae4 = mean(abs(p14$predictions-set3$Response))
+cfsrmse4 = sqrt(mean((p14$predictions-set3$Response)^2))
+cfserr4 = mean(p14$predictions!=set3$Response)
+
+cfsrt5 = ranger(Response~.-Id , data = cv5,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p15 = predict(cfsrt5,data = set4[,-ncol(cfste)])
+cfsmae5 = mean(abs(p15$predictions-set4$Response))
+cfsrmse5 = sqrt(mean((p15$predictions-set4$Response)^2))
+cfserr5 = mean(p15$predictions!=set4$Response)
+
+cfsrt6 = ranger(Response~.-Id , data = cv6,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p16 = predict(cfsrt1,data = set5[,-ncol(cfste)])
+cfsmae6 = mean(abs(p16$predictions-set5$Response))
+cfsrmse6 = sqrt(mean((p16$predictions-set5$Response)^2))
+cfserr6 = mean(p16$predictions!=set5$Response)
+
+cfsrt7 = ranger(Response~.-Id , data = cv7,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p17 = predict(cfsrt1,data = set6[,-ncol(cfste)])
+cfsmae7 = mean(abs(p17$predictions-set6$Response))
+cfsrmse7 = sqrt(mean((p17$predictions-set6$Response)^2))
+cfserr7 = mean(p17$predictions!=set6$Response)
+
+cfsrt8 = ranger(Response~.-Id , data = cv8,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p18 = predict(cfsrt8,data = set7[,-ncol(cfste)])
+cfsmae8 = mean(abs(p18$predictions-set7$Response))
+cfsrmse8 = sqrt(mean((p18$predictions-set7$Response)^2))
+cfserr8 = mean(p18$predictions!=set7$Response)
+
+cfsrt9 = ranger(Response~.-Id , data = cv9,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p19 = predict(cfsrt9,data = set8[,-ncol(cfste)])
+cfsmae9 = mean(abs(p19$predictions-set8$Response))
+cfsrmse9 = sqrt(mean((p19$predictions-set8$Response)^2))
+cfserr9 = mean(p19$predictions!=set8$Response)
+
+cfsrt10 = ranger(Response~.-Id , data = cv10,num.trees = 500,classification = T,regularization.usedepth = T,mtry = 12)
+p20 = predict(cfsrt10,data = set9[,-ncol(cfste)])
+cfsmae10 = mean(abs(p20$predictions-set9$Response))
+cfsrmse10 = sqrt(mean((p20$predictions-set9$Response)^2))
+cfserr10 = mean(p20$predictions!=set9$Response)
+
+cfsmae2 = mean(cfsmae1,cfsmae2,cfsmae3,cfsmae4,cfsmae5,cfsmae6,cfsmae7,cfsmae8,cfsmae9,cfsmae10)
+cfsrmse2 = mean(cfsrmse1,cfsrmse2,cfsrmse3,cfsrmse4,cfsrmse5,cfsrmse6,cfsrmse7,cfsrmse8,cfsrmse9,cfsrmse10)
+cfserr2 = mean(cfserr1,cfserr2,cfserr3,cfserr4,cfserr5,cfserr6,cfserr7,cfserr8,cfserr9,cfserr10)
+
+t1 = matrix(c(cfsmae,cfsrmse,cfserr,pcamae1,pcarmse1,pcaerr1,cfsmae2,cfsrmse2,cfserr2,pcamae2,pcarmse2,pcaerr2),nrow = 2,byrow = T)
+t1
+```
+
